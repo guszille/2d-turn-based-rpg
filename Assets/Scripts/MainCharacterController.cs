@@ -50,6 +50,8 @@ public class MainCharacterController : MonoBehaviour
             {
                 nextPositionToReach = pathToFollow[0];
                 pathToFollow.RemoveAt(0);
+
+                transform.localScale = new Vector3(transform.position.x <= nextPositionToReach.x ? 1f : -1f, 1f, 1f);
             }
             else
             {

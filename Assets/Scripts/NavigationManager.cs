@@ -43,7 +43,6 @@ public class NavigationManager : MonoBehaviour
 
                 pathToMainCharacterFollows.Add(tilemapCellCenterPosition);
             }
-
         }
 
         if (Input.GetMouseButtonDown(0))
