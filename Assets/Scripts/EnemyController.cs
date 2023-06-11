@@ -3,10 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MainCharacterController : BattleAgent
+public class EnemyController : BattleAgent
 {
-    public static MainCharacterController Instance { get; private set; }
-
     public enum AnimationState { IDLE, RUNNING }
 
     public class OnAnimationStateChangedEventArgs : EventArgs { public AnimationState state; }
@@ -14,12 +12,8 @@ public class MainCharacterController : BattleAgent
 
     private AnimationState animationState;
 
-    private const float FREE_MOVE_SPEED_MULTIPLIER = 2f;
-
     private void Awake()
     {
-        Instance = this;
-
         animationState = AnimationState.IDLE;
 
         pathToFollow = new List<Vector3>();
@@ -27,7 +21,7 @@ public class MainCharacterController : BattleAgent
         hasPathToFollow = false;
 
         isInBattle = false;
-        agentType = AgentType.PLAYER;
+        agentType = AgentType.ENEMY;
         battleAction = BattleAction.ON_HOLD;
 
         hitPoints = maxHitPoints;
@@ -35,8 +29,6 @@ public class MainCharacterController : BattleAgent
 
     private void Update()
     {
-        NavigationManager.Instance.ClearMarkedTilemap();
-
         if (isInBattle)
         {
             if (battleAction == BattleAction.MAIN)
@@ -63,43 +55,28 @@ public class MainCharacterController : BattleAgent
                 }
                 else
                 {
-                    Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    List<Vector2Int> pathFound = FindPathToFollow(mouseWorldPosition);
+                    List<Vector2Int> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position);
 
                     if (pathFound != null && pathFound.Count > 0)
                     {
-                        NavigationManager.Instance.MarkPath(pathFound);
+                        pathFound.RemoveAt(pathFound.Count - 1); // Removing the last element prevents the enemy from reaching the same position as the target.
 
-                        if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
-                        {
-                            animationState = AnimationState.RUNNING;
+                        animationState = AnimationState.RUNNING;
 
-                            OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
+                        OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
 
-                            SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
-                        }
+                        SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
                     }
                 }
             }
         }
         else
         {
-            Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            List<Vector2Int> pathFound = FindPathToFollow(mouseWorldPosition);
-
-            if (pathFound != null && pathFound.Count > 0)
+            if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= visionRange)
             {
-                NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition));
+                LookAt(MainCharacterController.Instance.transform.position.x);
 
-                if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
-                {
-                    SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
-                }
-            }
-
-            if (hasPathToFollow)
-            {
-                FollowPathFound(movementSpeed * FREE_MOVE_SPEED_MULTIPLIER * Time.deltaTime);
+                BattleManager.Instance.RequestBattleToStart();
             }
         }
     }

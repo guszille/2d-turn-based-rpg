@@ -15,12 +15,13 @@ public class MainCharacterVisualController : MonoBehaviour
 
     private void Start()
     {
-        MainCharacterController.Instance.OnStateChanged += MainCharacter_OnStateChanged;
+        MainCharacterController.Instance.OnAnimationStateChanged += MainCharacter_OnAnimationStateChanged;
     }
 
-    private void MainCharacter_OnStateChanged(object sender, System.EventArgs args)
+    private void MainCharacter_OnAnimationStateChanged(object sender, MainCharacterController.OnAnimationStateChangedEventArgs e)
     {
-        bool isRunning = MainCharacterController.Instance.GetState() == MainCharacterController.State.RUNNING;
+        bool isRunning = e.state == MainCharacterController.AnimationState.RUNNING;
+
         animator.SetBool(IS_RUNNING_PARAM, isRunning);
     }
 }

@@ -5,9 +5,16 @@ using UnityEngine.Tilemaps;
 
 public class NavigationManager : MonoBehaviour
 {
+    public static NavigationManager Instance { get; private set; }
+
     [SerializeField] private Tilemap navigationTilemap;
-    [SerializeField] private Tilemap debugTilemap;
+    [SerializeField] private Tilemap projectionTilemap;
     [SerializeField] private TileBaseSO tileBaseSO;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -16,45 +23,12 @@ public class NavigationManager : MonoBehaviour
         navigationTilemap.GetComponent<TilemapRenderer>().enabled = false;
     }
 
-    private void Update()
+    public Vector2Int ConvertToCellPosition(Vector3 position)
     {
-        Vector3 mainCharacterPosition = MainCharacterController.Instance.transform.position;
-        Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        Vector3Int mainCharacterCellPosition = navigationTilemap.WorldToCell(mainCharacterPosition);
-        Vector3Int mouseCellPosition = debugTilemap.WorldToCell(mouseWorldPosition);
-
-        Vector2Int startPosition = new Vector2Int(mainCharacterCellPosition.x, mainCharacterCellPosition.y);
-        Vector2Int endPosition = new Vector2Int(mouseCellPosition.x, mouseCellPosition.y);
-
-        List<Vector2Int> pathFound = FindPath(startPosition, endPosition);
-        List<Vector3> pathToMainCharacterFollows = new List<Vector3>();
-
-        if (pathFound != null)
-        {
-            debugTilemap.ClearAllTiles();
-
-            foreach (Vector2Int position in pathFound)
-            {
-                Vector3Int tilemapCellPosition = new Vector3Int(position.x, position.y, 0);
-                Vector3 tilemapCellCenterPosition = navigationTilemap.GetCellCenterWorld(tilemapCellPosition);
-
-                debugTilemap.SetTile(tilemapCellPosition, tileBaseSO.tileBase);
-
-                pathToMainCharacterFollows.Add(tilemapCellCenterPosition);
-            }
-        }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (pathToMainCharacterFollows.Count > 0)
-            {
-                MainCharacterController.Instance.SetPathToFollow(pathToMainCharacterFollows);
-            }
-        }
+        return (Vector2Int)projectionTilemap.WorldToCell(position); // Removing "z" coordinate.
     }
 
-    private List<Vector2Int> FindPath(Vector2Int startPosition, Vector2Int endPosition)
+    public List<Vector2Int> FindPath(Vector2Int startPosition, Vector2Int endPosition)
     {
         Dictionary<Vector2Int, AStar2D.Node> nodes = new Dictionary<Vector2Int, AStar2D.Node>();
 
@@ -64,7 +38,7 @@ public class NavigationManager : MonoBehaviour
             {
                 for (int z = navigationTilemap.cellBounds.zMin; z < navigationTilemap.cellBounds.zMax; z++)
                 {
-                    // Debug.Log("TILE AT (" + x + ", " + y + ", " + z + "): " + navigationTilemap.GetTile(new Vector3Int(x, y, z)));
+                    // Debug.Log("NAV TILE AT (" + x + ", " + y + ", " + z + "): " + navigationTilemap.GetTile(new Vector3Int(x, y, z)));
 
                     if (navigationTilemap.HasTile(new Vector3Int(x, y, z)))
                     {
@@ -77,5 +51,35 @@ public class NavigationManager : MonoBehaviour
         }
 
         return AStar2D.FindPath(startPosition, endPosition, nodes);
+    }
+
+    public List<Vector3> ConvertToWorldPosition(List<Vector2Int> path)
+    {
+        List<Vector3> newPath = new List<Vector3>();
+
+        foreach (Vector2Int position in path)
+        {
+            newPath.Add(navigationTilemap.GetCellCenterWorld(new Vector3Int(position.x, position.y)));
+        }
+
+        return newPath;
+    }
+
+    public void MarkPosition(Vector2Int position)
+    {
+        projectionTilemap.SetTile(new Vector3Int(position.x, position.y), tileBaseSO.tileBase);
+    }
+
+    public void MarkPath(List<Vector2Int> path)
+    {
+        foreach (Vector2Int position in path)
+        {
+            MarkPosition(position);
+        }
+    }
+
+    public void ClearMarkedTilemap()
+    {
+        projectionTilemap.ClearAllTiles();
     }
 }
