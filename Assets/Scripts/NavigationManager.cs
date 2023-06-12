@@ -28,7 +28,7 @@ public class NavigationManager : MonoBehaviour
         return (Vector2Int)projectionTilemap.WorldToCell(position); // Removing "z" coordinate.
     }
 
-    public List<Vector2Int> FindPath(Vector2Int startPosition, Vector2Int endPosition)
+    public List<(Vector2Int, int)> FindPath(Vector2Int startPosition, Vector2Int endPosition)
     {
         Dictionary<Vector2Int, AStar2D.Node> nodes = new Dictionary<Vector2Int, AStar2D.Node>();
 
@@ -53,28 +53,44 @@ public class NavigationManager : MonoBehaviour
         return AStar2D.FindPath(startPosition, endPosition, nodes);
     }
 
-    public List<Vector3> ConvertToWorldPosition(List<Vector2Int> path)
+    public (List<Vector2Int>, int) GetCostFromPath(List<(Vector2Int, int)> path)
     {
-        List<Vector3> newPath = new List<Vector3>();
+        List<Vector2Int> newPath = new List<Vector2Int>();
+        int totalCostOfPath = 0;
 
-        foreach (Vector2Int position in path)
+        foreach ((Vector2Int position, int cost) in path)
         {
-            newPath.Add(navigationTilemap.GetCellCenterWorld(new Vector3Int(position.x, position.y)));
+            newPath.Add(position);
+
+            totalCostOfPath += cost;
+        }
+
+        return (newPath, totalCostOfPath);
+    }
+
+    public List<(Vector3, int)> ConvertToWorldPosition(List<(Vector2Int, int)> path)
+    {
+        List<(Vector3, int)> newPath = new List<(Vector3, int)>();
+
+        foreach ((Vector2Int position, int cost) in path)
+        {
+            newPath.Add((navigationTilemap.GetCellCenterWorld(new Vector3Int(position.x, position.y)), cost));
         }
 
         return newPath;
     }
 
-    public void MarkPosition(Vector2Int position)
+    public void MarkPosition(Vector2Int position, Color color)
     {
+        projectionTilemap.color = color;
         projectionTilemap.SetTile(new Vector3Int(position.x, position.y), tileBaseSO.tileBase);
     }
 
-    public void MarkPath(List<Vector2Int> path)
+    public void MarkPath(List<Vector2Int> path, Color color)
     {
         foreach (Vector2Int position in path)
         {
-            MarkPosition(position);
+            MarkPosition(position, color);
         }
     }
 

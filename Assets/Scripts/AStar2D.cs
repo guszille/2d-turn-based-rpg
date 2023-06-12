@@ -34,7 +34,7 @@ public static class AStar2D
         }
     }
 
-    public static List<Vector2Int> FindPath(Vector2Int startPosition, Vector2Int endPosition, Dictionary<Vector2Int, Node> nodesMap)
+    public static List<(Vector2Int, int)> FindPath(Vector2Int startPosition, Vector2Int endPosition, Dictionary<Vector2Int, Node> nodesMap)
     {
         if (nodesMap.TryGetValue(startPosition, out Node startNode) && nodesMap.TryGetValue(endPosition, out Node endNode))
         {
@@ -47,7 +47,7 @@ public static class AStar2D
 
                 if (currentNode == endNode)
                 {
-                    return CalculatePathOfPositions(endNode);
+                    return CalculatePathFromNode(endNode);
                 }
 
                 openNodes.Remove(currentNode);
@@ -77,7 +77,7 @@ public static class AStar2D
             }
         }
 
-        return null;
+        return new List<(Vector2Int, int)>();
     }
 
     private static Node GetLowestFCostNode(List<Node> nodesList)
@@ -127,19 +127,22 @@ public static class AStar2D
         return DIAGONAL_COST * Mathf.Min(xDistance, yDistance) + STRAIGHT_COST * rDistance;
     }
 
-    private static List<Vector2Int> CalculatePathOfPositions(Node endNode)
+    private static List<(Vector2Int, int)> CalculatePathFromNode(Node endNode)
     {
         Node currentNode = endNode;
-        List<Vector2Int> positionsPath = new List<Vector2Int>() { currentNode.position };
+        List<(Vector2Int, int)> path = new List<(Vector2Int, int)>();
 
         while (currentNode.previousNode != null)
         {
-            positionsPath.Add(currentNode.previousNode.position);
+            int costToReachNode = CalculateDistanceBetweenNodes(currentNode, currentNode.previousNode);
+
+            path.Add((currentNode.position, costToReachNode));
+
             currentNode = currentNode.previousNode;
         }
 
-        positionsPath.Reverse();
+        path.Reverse();
 
-        return positionsPath;
+        return path;
     }
 }

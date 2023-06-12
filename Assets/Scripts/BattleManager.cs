@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 public class BattleManager : MonoBehaviour
@@ -142,5 +141,20 @@ public class BattleManager : MonoBehaviour
 
             StartCurrentTurn();
         }
+    }
+
+    public bool HasEnemyOnPosition(Vector3 position)
+    {
+        Vector2Int positionOnGrid = NavigationManager.Instance.ConvertToCellPosition(position);
+
+        foreach (EnemyController enemy in enemiesInTheRoom)
+        {
+            if (positionOnGrid == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

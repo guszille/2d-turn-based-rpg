@@ -22,9 +22,10 @@ public class MainCharacterController : BattleAgent
 
         animationState = AnimationState.IDLE;
 
-        pathToFollow = new List<Vector3>();
+        pathToFollow = new List<(Vector3, int)>();
         nextPositionToReach = transform.position;
         hasPathToFollow = false;
+        navigatedDistance = 0;
 
         isInBattle = false;
         agentType = AgentType.PLAYER;
@@ -64,19 +65,28 @@ public class MainCharacterController : BattleAgent
                 else
                 {
                     Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    List<Vector2Int> pathFound = FindPathToFollow(mouseWorldPosition);
+                    List<(Vector2Int, int)> pathFound = FindPathToFollow(mouseWorldPosition);
 
-                    if (pathFound != null && pathFound.Count > 0)
+                    if (pathFound.Count > 0)
                     {
-                        NavigationManager.Instance.MarkPath(pathFound);
+                        (List<Vector2Int> pathToMark, int pathCost) = NavigationManager.Instance.GetCostFromPath(pathFound);
 
-                        if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                        if (pathCost > maxMovementAmount || BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition))
                         {
-                            animationState = AnimationState.RUNNING;
+                            NavigationManager.Instance.MarkPath(pathToMark, new Color(1f, 0f, 0f, 0.125f));
+                        }
+                        else
+                        {
+                            NavigationManager.Instance.MarkPath(pathToMark, new Color(1f, 1f, 1f, 0.125f));
 
-                            OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
+                            if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                            {
+                                animationState = AnimationState.RUNNING;
 
-                            SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                                OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
+
+                                SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                            }
                         }
                     }
                 }
@@ -85,21 +95,28 @@ public class MainCharacterController : BattleAgent
         else
         {
             Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            List<Vector2Int> pathFound = FindPathToFollow(mouseWorldPosition);
+            List<(Vector2Int, int)> pathFound = FindPathToFollow(mouseWorldPosition);
 
-            if (pathFound != null && pathFound.Count > 0)
+            if (pathFound.Count > 0)
             {
-                NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition));
-
-                if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                if (BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition))
                 {
-                    SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                    NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition), new Color(1f, 0f, 0f, 0.125f));
+                }
+                else
+                {
+                    NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition), new Color(1f, 1f, 1f, 0.125f));
+
+                    if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                    {
+                        SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                    }
                 }
             }
 
             if (hasPathToFollow)
             {
-                FollowPathFound(movementSpeed * FREE_MOVE_SPEED_MULTIPLIER * Time.deltaTime);
+                FollowPathFound(movementSpeed * FREE_MOVE_SPEED_MULTIPLIER * Time.deltaTime, true);
             }
         }
     }

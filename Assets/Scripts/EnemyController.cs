@@ -16,9 +16,10 @@ public class EnemyController : BattleAgent
     {
         animationState = AnimationState.IDLE;
 
-        pathToFollow = new List<Vector3>();
+        pathToFollow = new List<(Vector3, int)>();
         nextPositionToReach = transform.position;
         hasPathToFollow = false;
+        navigatedDistance = 0;
 
         isInBattle = false;
         agentType = AgentType.ENEMY;
@@ -55,9 +56,9 @@ public class EnemyController : BattleAgent
                 }
                 else
                 {
-                    List<Vector2Int> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position);
+                    List<(Vector2Int, int)> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position);
 
-                    if (pathFound != null && pathFound.Count > 0)
+                    if (pathFound.Count > 0)
                     {
                         pathFound.RemoveAt(pathFound.Count - 1); // Removing the last element prevents the enemy from reaching the same position as the target.
 
@@ -66,6 +67,10 @@ public class EnemyController : BattleAgent
                         OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
 
                         SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                    }
+                    else
+                    {
+                        SetNextAction(BattleAction.MAIN);
                     }
                 }
             }

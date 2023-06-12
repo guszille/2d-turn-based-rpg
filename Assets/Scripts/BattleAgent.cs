@@ -24,16 +24,17 @@ public class BattleAgent : MonoBehaviour
     [SerializeField] protected float damage = 1f;
     [SerializeField] protected float visionRange = 5f;
 
-    protected List<Vector3> pathToFollow;
+    protected List<(Vector3, int)> pathToFollow;
     protected Vector3 nextPositionToReach;
     protected bool hasPathToFollow;
+    protected int navigatedDistance;
 
     protected bool isInBattle;
     protected AgentType agentType;
     protected BattleAction battleAction;
     protected float hitPoints;
 
-    protected List<Vector2Int> FindPathToFollow(Vector3 endPosition)
+    protected List<(Vector2Int, int)> FindPathToFollow(Vector3 endPosition)
     {
         Vector2Int startCellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
         Vector2Int endCellPosition = NavigationManager.Instance.ConvertToCellPosition(endPosition);
@@ -41,17 +42,17 @@ public class BattleAgent : MonoBehaviour
         return NavigationManager.Instance.FindPath(startCellPosition, endCellPosition);
     }
 
-    protected void SetPathToFollow(List<Vector3> newPathToFollow)
+    protected void SetPathToFollow(List<(Vector3, int)> newPathToFollow)
     {
         hasPathToFollow = true;
         pathToFollow = newPathToFollow;
     }
 
-    protected void FollowPathFound(float t)
+    protected void FollowPathFound(float translationSpeed, bool ignoresMovementLimit = false)
     {
         if (Vector3.Distance(transform.position, nextPositionToReach) > minThresholdToReachPosition)
         {
-            Vector3 nextLerpPosition = Vector3.Lerp(transform.position, nextPositionToReach, t);
+            Vector3 nextLerpPosition = Vector3.Lerp(transform.position, nextPositionToReach, translationSpeed);
 
             transform.position = nextLerpPosition;
         }
@@ -59,23 +60,36 @@ public class BattleAgent : MonoBehaviour
         {
             if (pathToFollow.Count > 0)
             {
-                nextPositionToReach = pathToFollow[0];
-                pathToFollow.RemoveAt(0);
+                (Vector3 positionToReach, int costToReachPosition) = pathToFollow[0];
 
-                LookAt(nextPositionToReach.x);
+                if (navigatedDistance + costToReachPosition <= maxMovementAmount || ignoresMovementLimit)
+                {
+                    nextPositionToReach = positionToReach;
+                    navigatedDistance = navigatedDistance + costToReachPosition;
+
+                    pathToFollow.RemoveAt(0);
+
+                    LookAt(nextPositionToReach.x);
+                }
+                else
+                {
+                    StopNavigation();
+                }
             }
             else
             {
-                hasPathToFollow = false;
+                StopNavigation();
             }
         }
     }
 
     protected void StopNavigation()
     {
-        pathToFollow = new List<Vector3>();
-        nextPositionToReach = transform.position;
+        pathToFollow = new List<(Vector3, int)>();
         hasPathToFollow = false;
+        navigatedDistance = 0;
+
+        transform.position = nextPositionToReach; // FIXME: should let the navigation stop by itself.
     }
 
     protected void EndTurn()

@@ -16334,7 +16334,7 @@ MonoBehaviour:
   movementSpeed: 10
   minThresholdToReachPosition: 0.005
   maxHitPoints: 5
-  maxMovementAmount: 10
+  maxMovementAmount: 60
   initiative: 2
   damage: 1
   visionRange: 5
@@ -16457,7 +16457,7 @@ MonoBehaviour:
   movementSpeed: 10
   minThresholdToReachPosition: 0.005
   maxHitPoints: 5
-  maxMovementAmount: 10
+  maxMovementAmount: 40
   initiative: 1
   damage: 1
   visionRange: 5
