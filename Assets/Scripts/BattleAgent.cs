@@ -7,9 +7,15 @@ public class BattleAgent : MonoBehaviour
 {
     public enum AgentType { PLAYER, ENEMY, NONE }
     public enum BattleAction { ON_HOLD, MAIN, MOVEMENT }
+    public enum MainActionType { ATTACK, ITEM, NONE }
+    public enum MainActionState { ON_HOLD, PROJECTING, PERFORMING }
+    public enum AnimationState { IDLE, RUNNING }
 
     public class OnBattleActionChangedEventArgs : EventArgs { public BattleAction action; }
     public event EventHandler<OnBattleActionChangedEventArgs> OnBattleActionChanged;
+
+    public class OnAnimationStateChangedEventArgs : EventArgs { public AnimationState state; }
+    public event EventHandler<OnAnimationStateChangedEventArgs> OnAnimationStateChanged;
 
     public event EventHandler OnBattleTurnEnded;
 
@@ -32,7 +38,11 @@ public class BattleAgent : MonoBehaviour
     protected bool isInBattle;
     protected AgentType agentType;
     protected BattleAction battleAction;
+    protected MainActionType mainActionType;
+    protected MainActionState mainActionState;
     protected float hitPoints;
+
+    protected AnimationState animationState;
 
     protected List<(Vector2Int, int)> FindPathToFollow(Vector3 endPosition)
     {
@@ -90,13 +100,8 @@ public class BattleAgent : MonoBehaviour
         navigatedDistance = 0;
 
         transform.position = nextPositionToReach; // FIXME: should let the navigation stop by itself.
-    }
 
-    protected void EndTurn()
-    {
-        battleAction = BattleAction.ON_HOLD;
-
-        OnBattleTurnEnded?.Invoke(this, EventArgs.Empty);
+        SetNextAnimation(AnimationState.IDLE); // FIXME: should let the navigation stop by itself.
     }
 
     protected void SetNextAction(BattleAction action)
@@ -106,11 +111,28 @@ public class BattleAgent : MonoBehaviour
         OnBattleActionChanged?.Invoke(this, new OnBattleActionChangedEventArgs { action = action });
     }
 
-    public void LookAt(float x)
+    protected void EndTurn()
+    {
+        battleAction = BattleAction.ON_HOLD;
+
+        OnBattleTurnEnded?.Invoke(this, EventArgs.Empty);
+    }
+
+    protected void LookAt(float x)
     {
         if (transform.position.x != x)
         {
             transform.localScale = new Vector3(transform.position.x <= x ? 1f : -1f, 1f, 1f);
+        }
+    }
+
+    protected void SetNextAnimation(AnimationState nextAnimationState)
+    {
+        if (nextAnimationState != animationState)
+        {
+            animationState = nextAnimationState;
+
+            OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
         }
     }
 
@@ -119,6 +141,7 @@ public class BattleAgent : MonoBehaviour
         isInBattle = true;
 
         StopNavigation();
+
         SetNextAction(BattleAction.ON_HOLD);
     }
 
@@ -132,6 +155,26 @@ public class BattleAgent : MonoBehaviour
     public void StartTurn()
     {
         SetNextAction(BattleAction.MOVEMENT);
+    }
+
+    public void SkipCurrentAction()
+    {
+        if (isInBattle && battleAction != BattleAction.ON_HOLD)
+        {
+            if (battleAction == BattleAction.MOVEMENT)
+            {
+                SetNextAction(BattleAction.MAIN);
+            }
+            else
+            {
+                EndTurn();
+            }
+        }
+    }
+
+    public void TakeDamage(float damageTaken)
+    {
+        hitPoints = Mathf.Max(hitPoints - damageTaken, 0f);
     }
 
     public AgentType GetAgentType()

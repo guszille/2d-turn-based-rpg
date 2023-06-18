@@ -20,9 +20,9 @@ public class EnemyVisualController : MonoBehaviour
         enemyController.OnAnimationStateChanged += EnemyController_OnAnimationStateChanged;
     }
 
-    private void EnemyController_OnAnimationStateChanged(object sender, EnemyController.OnAnimationStateChangedEventArgs e)
+    private void EnemyController_OnAnimationStateChanged(object sender, BattleAgent.OnAnimationStateChangedEventArgs e)
     {
-        bool isRunning = e.state == EnemyController.AnimationState.RUNNING;
+        bool isRunning = e.state == BattleAgent.AnimationState.RUNNING;
 
         animator.SetBool(IS_RUNNING_PARAM, isRunning);
     }

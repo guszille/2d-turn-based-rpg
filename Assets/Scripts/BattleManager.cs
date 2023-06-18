@@ -91,14 +91,17 @@ public class BattleManager : MonoBehaviour
 
         foreach (BattleAgent agent in agentsInBattle)
         {
-            if (agent.GetAgentType() == BattleAgent.AgentType.PLAYER && agent.IsDead())
+            if (agent.GetAgentType() == BattleAgent.AgentType.PLAYER)
             {
-                break;
+                if (agent.IsDead()) break;
             }
-            else if (!agent.IsDead())
+            else
             {
-                battleIsOver = false;
-                break;
+                if (!agent.IsDead())
+                {
+                    battleIsOver = false;
+                    break;
+                }
             }
         }
 
@@ -143,18 +146,36 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public bool HasEnemyOnPosition(Vector3 position)
+    public bool HasEnemyOnPosition(Vector3 worldPosition)
     {
-        Vector2Int positionOnGrid = NavigationManager.Instance.ConvertToCellPosition(position);
+        Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(worldPosition);
 
         foreach (EnemyController enemy in enemiesInTheRoom)
         {
-            if (positionOnGrid == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
+            if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public BattleAgent GetEnemyOnCellPosition(Vector2Int cellPosition)
+    {
+        foreach (EnemyController enemy in enemiesInTheRoom)
+        {
+            if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
+            {
+                return enemy;
+            }
+        }
+
+        return null;
+    }
+
+    public BattleAgent GetTurnOwner()
+    {
+        return agentsInBattle[currentTurnOwner];
     }
 }

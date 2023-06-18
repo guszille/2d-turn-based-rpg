@@ -7,14 +7,9 @@ public class MainCharacterController : BattleAgent
 {
     public static MainCharacterController Instance { get; private set; }
 
-    public enum AnimationState { IDLE, RUNNING }
+    public event EventHandler OnAttackActionStarted;
 
-    public class OnAnimationStateChangedEventArgs : EventArgs { public AnimationState state; }
-    public event EventHandler<OnAnimationStateChangedEventArgs> OnAnimationStateChanged;
-
-    private AnimationState animationState;
-
-    private const float FREE_MOVE_SPEED_MULTIPLIER = 2f;
+    private const float FREE_MOVE_SPEED_MULTIPLIER = 1.5f;
 
     private void Awake()
     {
@@ -30,21 +25,73 @@ public class MainCharacterController : BattleAgent
         isInBattle = false;
         agentType = AgentType.PLAYER;
         battleAction = BattleAction.ON_HOLD;
+        mainActionType = MainActionType.NONE;
+        mainActionState = MainActionState.ON_HOLD;
 
         hitPoints = maxHitPoints;
     }
 
     private void Update()
     {
-        NavigationManager.Instance.ClearMarkedTilemap();
-
         if (isInBattle)
         {
             if (battleAction == BattleAction.MAIN)
             {
-                // TODO: do attack action.
+                if (mainActionState == MainActionState.PROJECTING)
+                {
+                    if (mainActionType == MainActionType.ATTACK)
+                    {
+                        List<Vector2Int> projectedArea = new List<Vector2Int>();
+                        Vector2Int centerCellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
 
-                EndTurn();
+                        projectedArea.Add(centerCellPosition + new Vector2Int(-1,  1));
+                        projectedArea.Add(centerCellPosition + new Vector2Int( 0,  1));
+                        projectedArea.Add(centerCellPosition + new Vector2Int( 1,  1));
+                        projectedArea.Add(centerCellPosition + new Vector2Int(-1,  0));
+
+                        projectedArea.Add(centerCellPosition + new Vector2Int( 1,  0));
+                        projectedArea.Add(centerCellPosition + new Vector2Int(-1, -1));
+                        projectedArea.Add(centerCellPosition + new Vector2Int( 0, -1));
+                        projectedArea.Add(centerCellPosition + new Vector2Int( 1, -1));
+
+                        NavigationManager.Instance.MarkPath(projectedArea, new Color(0f, 0f, 1f, 0.125f));
+
+                        if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                        {
+                            mainActionState = MainActionState.PERFORMING;
+
+                            OnAttackActionStarted?.Invoke(this, EventArgs.Empty);
+                        }
+                    }
+                }
+
+                if (mainActionState == MainActionState.PERFORMING)
+                {
+                    if (mainActionType == MainActionType.ATTACK)
+                    { 
+                        List<Vector2Int> hittedArea = new List<Vector2Int>();
+                        Vector2Int centerCellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
+
+                        hittedArea.Add(centerCellPosition + new Vector2Int(-1,  1));
+                        hittedArea.Add(centerCellPosition + new Vector2Int( 0,  1));
+                        hittedArea.Add(centerCellPosition + new Vector2Int( 1,  1));
+                        hittedArea.Add(centerCellPosition + new Vector2Int(-1,  0));
+
+                        hittedArea.Add(centerCellPosition + new Vector2Int( 1,  0));
+                        hittedArea.Add(centerCellPosition + new Vector2Int(-1, -1));
+                        hittedArea.Add(centerCellPosition + new Vector2Int( 0, -1));
+                        hittedArea.Add(centerCellPosition + new Vector2Int( 1, -1));
+
+                        DoBasicAttack(hittedArea);
+
+                        mainActionState = MainActionState.ON_HOLD;
+                    }
+                }
+
+                if (mainActionState == MainActionState.ON_HOLD)
+                {
+                    // Awaiting or doing something...
+                }
             }
 
             if (battleAction == BattleAction.MOVEMENT)
@@ -55,9 +102,7 @@ public class MainCharacterController : BattleAgent
 
                     if (!hasPathToFollow)
                     {
-                        animationState = AnimationState.IDLE;
-
-                        OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
+                        SetNextAnimation(AnimationState.IDLE);
 
                         SetNextAction(BattleAction.MAIN);
                     }
@@ -81,15 +126,18 @@ public class MainCharacterController : BattleAgent
 
                             if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
                             {
-                                animationState = AnimationState.RUNNING;
-
-                                OnAnimationStateChanged?.Invoke(this, new OnAnimationStateChangedEventArgs { state = animationState });
+                                SetNextAnimation(AnimationState.RUNNING);
 
                                 SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
                             }
                         }
                     }
                 }
+            }
+
+            if (battleAction == BattleAction.ON_HOLD)
+            {
+                // Awaiting or doing something...
             }
         }
         else
@@ -109,6 +157,8 @@ public class MainCharacterController : BattleAgent
 
                     if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
                     {
+                        SetNextAnimation(AnimationState.RUNNING);
+
                         SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
                     }
                 }
@@ -119,5 +169,38 @@ public class MainCharacterController : BattleAgent
                 FollowPathFound(movementSpeed * FREE_MOVE_SPEED_MULTIPLIER * Time.deltaTime, true);
             }
         }
+    }
+
+    private void DoBasicAttack(List<Vector2Int> hittedCellPositions)
+    {
+        foreach (Vector2Int cellPosition in hittedCellPositions)
+        {
+            BattleAgent enemy = BattleManager.Instance.GetEnemyOnCellPosition(cellPosition);
+
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+            }
+        }
+    }
+
+    public void StartAttackAction()
+    {
+        mainActionState = MainActionState.PROJECTING;
+        mainActionType = MainActionType.ATTACK;
+    }
+
+    public void CancelAttackAction()
+    {
+        mainActionState = MainActionState.ON_HOLD;
+        mainActionType = MainActionType.NONE;
+    }
+
+    public void EndAttackAction()
+    {
+        mainActionState = MainActionState.ON_HOLD;
+        mainActionType = MainActionType.NONE;
+
+        EndTurn();
     }
 }

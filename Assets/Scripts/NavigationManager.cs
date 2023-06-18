@@ -23,6 +23,11 @@ public class NavigationManager : MonoBehaviour
         navigationTilemap.GetComponent<TilemapRenderer>().enabled = false;
     }
 
+    private void Update()
+    {
+        ClearMarkedTilemap();
+    }
+
     public Vector2Int ConvertToCellPosition(Vector3 position)
     {
         return (Vector2Int)projectionTilemap.WorldToCell(position); // Removing "z" coordinate.

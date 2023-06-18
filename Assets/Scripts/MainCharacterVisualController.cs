@@ -18,9 +18,9 @@ public class MainCharacterVisualController : MonoBehaviour
         MainCharacterController.Instance.OnAnimationStateChanged += MainCharacter_OnAnimationStateChanged;
     }
 
-    private void MainCharacter_OnAnimationStateChanged(object sender, MainCharacterController.OnAnimationStateChangedEventArgs e)
+    private void MainCharacter_OnAnimationStateChanged(object sender, BattleAgent.OnAnimationStateChangedEventArgs e)
     {
-        bool isRunning = e.state == MainCharacterController.AnimationState.RUNNING;
+        bool isRunning = e.state == BattleAgent.AnimationState.RUNNING;
 
         animator.SetBool(IS_RUNNING_PARAM, isRunning);
     }
