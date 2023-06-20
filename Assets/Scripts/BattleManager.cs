@@ -93,11 +93,14 @@ public class BattleManager : MonoBehaviour
         {
             if (agent.GetAgentType() == BattleAgent.AgentType.PLAYER)
             {
-                if (agent.IsDead()) break;
+                if (agent.GetHitPoints() == 0f)
+                {
+                    break;
+                }
             }
             else
             {
-                if (!agent.IsDead())
+                if (agent.GetHitPoints() > 0f)
                 {
                     battleIsOver = false;
                     break;

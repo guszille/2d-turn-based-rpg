@@ -18,6 +18,7 @@ public class BattleAgent : MonoBehaviour
     public event EventHandler<OnAnimationStateChangedEventArgs> OnAnimationStateChanged;
 
     public event EventHandler OnBattleTurnEnded;
+    public event EventHandler OnHitPointsChanged;
 
     [Header("NAVIGATION INFO")]
     [SerializeField] protected float movementSpeed = 10f;
@@ -175,11 +176,23 @@ public class BattleAgent : MonoBehaviour
     public void TakeDamage(float damageTaken)
     {
         hitPoints = Mathf.Max(hitPoints - damageTaken, 0f);
+
+        OnHitPointsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public AgentType GetAgentType()
     {
         return agentType;
+    }
+
+    public float GetMaxHitPoints()
+    {
+        return maxHitPoints;
+    }
+
+    public float GetHitPoints()
+    {
+        return hitPoints;
     }
 
     public bool IsDead()
