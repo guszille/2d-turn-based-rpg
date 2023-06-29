@@ -58,6 +58,34 @@ public class NavigationManager : MonoBehaviour
         return AStar2D.FindPath(startPosition, endPosition, nodes);
     }
 
+    public List<(Vector2Int, int)> FindPath(Vector2Int startPosition, Vector2Int endPosition, List<Vector2Int> blackListOfPositions)
+    {
+        Dictionary<Vector2Int, AStar2D.Node> nodes = new Dictionary<Vector2Int, AStar2D.Node>();
+
+        for (int x = navigationTilemap.cellBounds.xMin; x < navigationTilemap.cellBounds.xMax; x++)
+        {
+            for (int y = navigationTilemap.cellBounds.yMin; y < navigationTilemap.cellBounds.yMax; y++)
+            {
+                for (int z = navigationTilemap.cellBounds.zMin; z < navigationTilemap.cellBounds.zMax; z++)
+                {
+                    // Debug.Log("NAV TILE AT (" + x + ", " + y + ", " + z + "): " + navigationTilemap.GetTile(new Vector3Int(x, y, z)));
+
+                    if (navigationTilemap.HasTile(new Vector3Int(x, y, z)))
+                    {
+                        Vector2Int nodePosition = new Vector2Int(x, y);
+
+                        if (!blackListOfPositions.Contains(nodePosition))
+                        {
+                            nodes.Add(nodePosition, new AStar2D.Node(nodePosition));
+                        }
+                    }
+                }
+            }
+        }
+
+        return AStar2D.FindPath(startPosition, endPosition, nodes);
+    }
+
     public (List<Vector2Int>, int) GetCostFromPath(List<(Vector2Int, int)> path)
     {
         List<Vector2Int> newPath = new List<Vector2Int>();

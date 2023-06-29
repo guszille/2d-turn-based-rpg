@@ -5,7 +5,11 @@ using UnityEngine;
 
 public class EnemyController : BattleAgent
 {
-    private float maxTimeToProjectAnAttack = 1f;
+    public event EventHandler OnAttackActionStarted;
+    public event EventHandler OnAttackActionEnded;
+
+    private const float MAX_TIME_TO_PROJECT_AN_ATTACK = 1f;
+
     private float timeProjectingAnAttack;
 
     private void Awake()
@@ -25,7 +29,7 @@ public class EnemyController : BattleAgent
 
         hitPoints = maxHitPoints;
 
-        timeProjectingAnAttack = maxTimeToProjectAnAttack;
+        timeProjectingAnAttack = MAX_TIME_TO_PROJECT_AN_ATTACK;
     }
 
     private void Update()
@@ -59,9 +63,7 @@ public class EnemyController : BattleAgent
                         {
                             mainActionState = MainActionState.PERFORMING;
 
-                            timeProjectingAnAttack = maxTimeToProjectAnAttack;
-
-                            // TODO: trigger attack animation.
+                            timeProjectingAnAttack = MAX_TIME_TO_PROJECT_AN_ATTACK;
                         }
                     }
                 }
@@ -105,18 +107,31 @@ public class EnemyController : BattleAgent
                     {
                         SetNextAnimation(AnimationState.IDLE);
 
-                        SetNextAction(BattleAction.MAIN);
+                        if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= rangeToAttack)
+                        {
+                            SetNextAction(BattleAction.MAIN);
 
-                        StartAttackAction();
+                            StartAttackAction();
+                        }
                     }
                 }
                 else
                 {
-                    List<(Vector2Int, int)> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position);
+                    List<Vector2Int> blackList = BattleManager.Instance.GetAllEnemiesCellPositions();
+                    Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
+
+                    blackList.Remove(cellPosition); // Removes own cell position from the balck list.
+
+                    List<(Vector2Int, int)> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position, blackList);
 
                     if (pathFound.Count > 0)
                     {
-                        pathFound.RemoveAt(pathFound.Count - 1); // Removing the last element prevents the enemy from reaching the same position as the target.
+                        Vector2Int mainCharacterCellPosition = NavigationManager.Instance.ConvertToCellPosition(MainCharacterController.Instance.transform.position);
+
+                        if (pathFound[^1].Item1 == mainCharacterCellPosition)
+                        {
+                            pathFound.Remove(pathFound[^1]); // Removes the last element to prevent the enemy from reaching the same position as the target.
+                        }
 
                         SetNextAnimation(AnimationState.RUNNING);
 
@@ -124,11 +139,19 @@ public class EnemyController : BattleAgent
                     }
                     else
                     {
-                        SetNextAction(BattleAction.MAIN);
+                        if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= rangeToAttack)
+                        {
+                            SetNextAction(BattleAction.MAIN);
 
-                        StartAttackAction();
+                            StartAttackAction();
+                        }
                     }
                 }
+            }
+
+            if (battleAction == BattleAction.ON_HOLD)
+            {
+                // Awaiting or doing something...
             }
         }
         else
@@ -144,14 +167,20 @@ public class EnemyController : BattleAgent
 
     private void StartAttackAction()
     {
+        LookAt(MainCharacterController.Instance.transform.position.x);
+
         mainActionState = MainActionState.PROJECTING;
         mainActionType = MainActionType.ATTACK;
+
+        OnAttackActionStarted?.Invoke(this, EventArgs.Empty);
     }
 
     private void EndAttackAction()
     {
         mainActionState = MainActionState.ON_HOLD;
         mainActionType = MainActionType.NONE;
+
+        OnAttackActionEnded?.Invoke(this, EventArgs.Empty);
 
         EndTurn();
     }

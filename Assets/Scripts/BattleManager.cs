@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BattleManager : MonoBehaviour
@@ -51,6 +52,8 @@ public class BattleManager : MonoBehaviour
 
             agentsInBattle.Add(enemy);
         }
+
+        agentsInBattle = agentsInBattle.OrderBy(x => x.GetInitiative()).ToList();
     }
 
     private void GiveAgentTurnOwnersip(int index)
@@ -175,6 +178,18 @@ public class BattleManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    public List<Vector2Int> GetAllEnemiesCellPositions()
+    {
+        List<Vector2Int> enemiesCellPositions = new List<Vector2Int>();
+
+        foreach (EnemyController enemy in enemiesInTheRoom)
+        {
+            enemiesCellPositions.Add(NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position));
+        }
+
+        return enemiesCellPositions;
     }
 
     public BattleAgent GetTurnOwner()

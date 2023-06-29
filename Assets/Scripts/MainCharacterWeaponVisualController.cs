@@ -15,10 +15,10 @@ public class MainCharacterWeaponVisualController : MonoBehaviour
 
     private void Start()
     {
-        MainCharacterController.Instance.OnAttackActionStarted += MainCharacter_OnAttackActionStarted; ;
+        MainCharacterController.Instance.OnAttackPerformanceStarted += MainCharacter_OnAttackPerformanceStarted; ;
     }
 
-    private void MainCharacter_OnAttackActionStarted(object sender, System.EventArgs e)
+    private void MainCharacter_OnAttackPerformanceStarted(object sender, System.EventArgs e)
     {
         animator.SetTrigger(IS_ATTACKING_PARAM);
     }

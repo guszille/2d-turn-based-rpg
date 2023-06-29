@@ -30,6 +30,7 @@ public class BattleAgent : MonoBehaviour
     [SerializeField] protected float initiative = 1f;
     [SerializeField] protected float damage = 1f;
     [SerializeField] protected float visionRange = 5f;
+    [SerializeField] protected float rangeToAttack = 1.5f;
 
     protected List<(Vector3, int)> pathToFollow;
     protected Vector3 nextPositionToReach;
@@ -51,6 +52,14 @@ public class BattleAgent : MonoBehaviour
         Vector2Int endCellPosition = NavigationManager.Instance.ConvertToCellPosition(endPosition);
 
         return NavigationManager.Instance.FindPath(startCellPosition, endCellPosition);
+    }
+
+    protected List<(Vector2Int, int)> FindPathToFollow(Vector3 endPosition, List<Vector2Int> blackListOfPositions)
+    {
+        Vector2Int startCellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
+        Vector2Int endCellPosition = NavigationManager.Instance.ConvertToCellPosition(endPosition);
+
+        return NavigationManager.Instance.FindPath(startCellPosition, endCellPosition, blackListOfPositions);
     }
 
     protected void SetPathToFollow(List<(Vector3, int)> newPathToFollow)
@@ -193,6 +202,11 @@ public class BattleAgent : MonoBehaviour
     public float GetHitPoints()
     {
         return hitPoints;
+    }
+
+    public float GetInitiative()
+    {
+        return initiative;
     }
 
     public bool IsDead()

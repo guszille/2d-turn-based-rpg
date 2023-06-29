@@ -7,9 +7,9 @@ public class MainCharacterController : BattleAgent
 {
     public static MainCharacterController Instance { get; private set; }
 
-    public event EventHandler OnAttackActionStarted;
-
     private const float FREE_MOVE_SPEED_MULTIPLIER = 1.5f;
+
+    public event EventHandler OnAttackPerformanceStarted;
 
     private void Awake()
     {
@@ -60,7 +60,7 @@ public class MainCharacterController : BattleAgent
                         {
                             mainActionState = MainActionState.PERFORMING;
 
-                            OnAttackActionStarted?.Invoke(this, EventArgs.Empty);
+                            OnAttackPerformanceStarted?.Invoke(this, EventArgs.Empty);
                         }
                     }
                 }
