@@ -34,6 +34,11 @@ public class EnemyController : BattleAgent
 
     private void Update()
     {
+        if (hitPoints == 0f)
+        {
+            return;
+        }
+
         if (isInBattle)
         {
             if (battleAction == BattleAction.MAIN)
@@ -112,6 +117,10 @@ public class EnemyController : BattleAgent
                             SetNextAction(BattleAction.MAIN);
 
                             StartAttackAction();
+                        }
+                        else
+                        {
+                            EndTurn();
                         }
                     }
                 }

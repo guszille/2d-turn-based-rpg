@@ -3517,7 +3517,7 @@ Tilemap:
       - {fileID: 21300000, guid: 468dcf1365f5b8440b6430b347e86fd2, type: 3}
       - {fileID: 21300000, guid: 9b3f70f244462c74da811c03eab0da3c, type: 3}
       - {fileID: 21300000, guid: 829a4df9e8907c84093925cb618cc1ce, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_IsLooping: 1
   - first: {x: 9, y: 4, z: 0}
@@ -16985,7 +16985,7 @@ MonoBehaviour:
   maxHitPoints: 5
   maxMovementAmount: 60
   initiative: 2
-  damage: 1
+  damage: 2.5
   visionRange: 5
   rangeToAttack: 1.5
 --- !u!1 &2013934376

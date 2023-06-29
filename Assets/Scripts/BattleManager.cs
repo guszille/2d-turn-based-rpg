@@ -116,6 +116,9 @@ public class BattleManager : MonoBehaviour
             battleMode = BattleMode.OFF;
             OnBattleModeChanged?.Invoke(this, new OnBattleModeChangedEventArgs { battleMode = battleMode });
 
+            OnBattleTurnChanged?.Invoke(this, new OnBattleTurnChangedEventArgs { agentType = BattleAgent.AgentType.NONE });
+            OnBattleActionChanged?.Invoke(this, new OnBattleActionChangedEventArgs { battleAction = BattleAgent.BattleAction.ON_HOLD });
+
             foreach (BattleAgent agent in agentsInBattle)
             {
                 agent.RemoveFromBattle();
@@ -132,7 +135,11 @@ public class BattleManager : MonoBehaviour
 
         if (battleMode == BattleMode.ON)
         {
-            currentTurnOwner = (currentTurnOwner + 1) % agentsInBattle.Count; // Move to next agent.
+            do
+            {
+                currentTurnOwner = (currentTurnOwner + 1) % agentsInBattle.Count; // Move to next agent.
+            }
+            while (agentsInBattle[currentTurnOwner].GetHitPoints() == 0f);
 
             StartCurrentTurn();
         }

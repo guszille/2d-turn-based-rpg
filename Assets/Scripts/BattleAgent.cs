@@ -160,6 +160,9 @@ public class BattleAgent : MonoBehaviour
         isInBattle = false;
 
         SetNextAction(BattleAction.ON_HOLD);
+
+        mainActionType = MainActionType.NONE;
+        mainActionState = MainActionState.ON_HOLD;
     }
 
     public void StartTurn()
@@ -182,11 +185,21 @@ public class BattleAgent : MonoBehaviour
         }
     }
 
+    public void Hide()
+    {
+        gameObject.SetActive(false);
+    }
+
     public void TakeDamage(float damageTaken)
     {
         hitPoints = Mathf.Max(hitPoints - damageTaken, 0f);
 
         OnHitPointsChanged?.Invoke(this, EventArgs.Empty);
+
+        if (hitPoints == 0f)
+        {
+            Hide();
+        }
     }
 
     public AgentType GetAgentType()
@@ -207,10 +220,5 @@ public class BattleAgent : MonoBehaviour
     public float GetInitiative()
     {
         return initiative;
-    }
-
-    public bool IsDead()
-    {
-        return hitPoints == 0f;
     }
 }
