@@ -126,8 +126,8 @@ public class EnemyController : BattleAgent
                 }
                 else
                 {
-                    List<Vector2Int> blackList = BattleManager.Instance.GetAllEnemiesCellPositions();
                     Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
+                    List<Vector2Int> blackList = BattleManager.Instance.GetAllEnemiesCellPositions(false);
 
                     blackList.Remove(cellPosition); // Removes own cell position from the balck list.
 

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7469adb35a6911449b9fa4b6c643c17a, type: 3}
+  m_Name: DoorClosedTileGroupSO
+  m_EditorClassIdentifier: 
+  tileGroupList:
+  - {fileID: 11400000, guid: 4631e99a1a5964b4ebd5153765c60298, type: 2}
+  - {fileID: 11400000, guid: 550b5a73a9e1d824dbef8e11eaad374c, type: 2}
+  - {fileID: 11400000, guid: 0d74ae3ed8fa5dc46a91aa4c9066e55f, type: 2}
+  - {fileID: 11400000, guid: 565236a10710d1f45b25348c3b650ec1, type: 2}
+  tileGroupName: Door Closed

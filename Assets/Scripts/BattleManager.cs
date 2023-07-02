@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class BattleManager : MonoBehaviour
@@ -53,7 +52,12 @@ public class BattleManager : MonoBehaviour
             agentsInBattle.Add(enemy);
         }
 
-        agentsInBattle = agentsInBattle.OrderBy(x => x.GetInitiative()).ToList();
+        agentsInBattle.Sort(delegate (BattleAgent A, BattleAgent B)
+        {
+            if (A.GetInitiative() > B.GetInitiative()) return -1;
+            else if (A.GetInitiative() < B.GetInitiative()) return +1;
+            else return 0;
+        });
     }
 
     private void GiveAgentTurnOwnersip(int index)
@@ -159,7 +163,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public bool HasEnemyOnPosition(Vector3 worldPosition)
+    public bool HasEnemyOnPosition(Vector3 worldPosition, bool includeDeadEnemies = true)
     {
         Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(worldPosition);
 
@@ -167,33 +171,42 @@ public class BattleManager : MonoBehaviour
         {
             if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
             {
-                return true;
+                if (includeDeadEnemies || enemy.GetHitPoints() > 0f)
+                {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    public BattleAgent GetEnemyOnCellPosition(Vector2Int cellPosition)
+    public BattleAgent GetEnemyOnCellPosition(Vector2Int cellPosition, bool includeDeadEnemies = true)
     {
         foreach (EnemyController enemy in enemiesInTheRoom)
         {
             if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
             {
-                return enemy;
+                if (includeDeadEnemies || enemy.GetHitPoints() > 0f)
+                {
+                    return enemy;
+                }
             }
         }
 
         return null;
     }
 
-    public List<Vector2Int> GetAllEnemiesCellPositions()
+    public List<Vector2Int> GetAllEnemiesCellPositions(bool includeDeadEnemies = true)
     {
         List<Vector2Int> enemiesCellPositions = new List<Vector2Int>();
 
         foreach (EnemyController enemy in enemiesInTheRoom)
         {
-            enemiesCellPositions.Add(NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position));
+            if (includeDeadEnemies || enemy.GetHitPoints() > 0f)
+            {
+                enemiesCellPositions.Add(NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position));
+            }
         }
 
         return enemiesCellPositions;
@@ -202,5 +215,10 @@ public class BattleManager : MonoBehaviour
     public BattleAgent GetTurnOwner()
     {
         return agentsInBattle[currentTurnOwner];
+    }
+
+    public bool IsBattleOn()
+    {
+        return battleMode == BattleMode.ON;
     }
 }

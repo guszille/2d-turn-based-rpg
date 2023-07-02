@@ -32,11 +32,11 @@ public class EnemyVisualController : MonoBehaviour
 
     private void EnemyController_OnAttackActionStarted(object sender, System.EventArgs e)
     {
-        animator.speed = 0.0f;
+        // animator.speed = 0.0f;
     }
 
     private void EnemyController_OnAttackActionEnded(object sender, System.EventArgs e)
     {
-        animator.speed = 1.0f;
+        // animator.speed = 1.0f;
     }
 }

@@ -131,4 +131,9 @@ public class NavigationManager : MonoBehaviour
     {
         projectionTilemap.ClearAllTiles();
     }
+
+    public void InsertNavigationTile(Vector2Int position)
+    {
+        navigationTilemap.SetTile(new Vector3Int(position.x, position.y), tileBaseSO.tileBase);
+    }
 }

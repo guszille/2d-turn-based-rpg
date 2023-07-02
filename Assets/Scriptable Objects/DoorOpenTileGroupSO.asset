@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7469adb35a6911449b9fa4b6c643c17a, type: 3}
+  m_Name: DoorOpenTileGroupSO
+  m_EditorClassIdentifier: 
+  tileGroupList:
+  - {fileID: 11400000, guid: 6af3138c95f8481469b1fa24960ace90, type: 2}
+  - {fileID: 11400000, guid: bde84850e636c6648a834fe723a84250, type: 2}
+  - {fileID: 11400000, guid: f375ea001a6922d4b8f5a70f12a85ab2, type: 2}
+  - {fileID: 11400000, guid: 7c3a8cb1d41752a41bd6dbb2fded626e, type: 2}
+  tileGroupName: Door Open

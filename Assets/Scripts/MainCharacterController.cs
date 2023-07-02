@@ -116,7 +116,7 @@ public class MainCharacterController : BattleAgent
                     {
                         (List<Vector2Int> pathToMark, int pathCost) = NavigationManager.Instance.GetCostFromPath(pathFound);
 
-                        if (pathCost > maxMovementAmount || BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition))
+                        if (pathCost > maxMovementAmount || BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition, false))
                         {
                             NavigationManager.Instance.MarkPath(pathToMark, new Color(1f, 0f, 0f, 0.125f));
                         }
@@ -147,7 +147,7 @@ public class MainCharacterController : BattleAgent
 
             if (pathFound.Count > 0)
             {
-                if (BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition))
+                if (BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition, false))
                 {
                     NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition), new Color(1f, 0f, 0f, 0.125f));
                 }
@@ -175,7 +175,7 @@ public class MainCharacterController : BattleAgent
     {
         foreach (Vector2Int cellPosition in hittedCellPositions)
         {
-            BattleAgent enemy = BattleManager.Instance.GetEnemyOnCellPosition(cellPosition);
+            BattleAgent enemy = BattleManager.Instance.GetEnemyOnCellPosition(cellPosition, false);
 
             if (enemy != null)
             {
