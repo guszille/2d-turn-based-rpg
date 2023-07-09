@@ -3,17 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyController : BattleAgent
+public class MainCharacterController : BattleAgent
 {
-    public event EventHandler OnAttackActionStarted;
-    public event EventHandler OnAttackActionEnded;
+    public static MainCharacterController Instance { get; private set; }
 
-    private const float MAX_TIME_TO_PROJECT_AN_ATTACK = 1f;
+    private const float FREE_MOVE_SPEED_MULTIPLIER = 1.5f;
 
-    private float timeProjectingAnAttack;
+    public event EventHandler OnAttackPerformanceStarted;
 
     private void Awake()
     {
+        Instance = this;
+
         animationState = AnimationState.IDLE;
 
         pathToFollow = new List<(Vector3, int)>();
@@ -22,23 +23,17 @@ public class EnemyController : BattleAgent
         navigatedDistance = 0;
 
         isInBattle = false;
-        agentType = AgentType.ENEMY;
+        agentType = AgentType.PLAYER;
         battleAction = BattleAction.ON_HOLD;
         mainActionType = MainActionType.NONE;
         mainActionState = MainActionState.ON_HOLD;
 
         hitPoints = maxHitPoints;
-
-        timeProjectingAnAttack = MAX_TIME_TO_PROJECT_AN_ATTACK;
+        armorPoints = maxArmorPoints;
     }
 
     private void Update()
     {
-        if (hitPoints == 0f)
-        {
-            return;
-        }
-
         if (isInBattle)
         {
             if (battleAction == BattleAction.MAIN)
@@ -60,15 +55,13 @@ public class EnemyController : BattleAgent
                         projectedArea.Add(centerCellPosition + new Vector2Int( 0, -1));
                         projectedArea.Add(centerCellPosition + new Vector2Int( 1, -1));
 
-                        NavigationManager.Instance.MarkPath(projectedArea, new Color(1f, 0f, 1f, 0.125f));
+                        NavigationManager.Instance.MarkPath(projectedArea, new Color(0f, 0f, 1f, 0.125f));
 
-                        timeProjectingAnAttack = timeProjectingAnAttack - Time.deltaTime;
-
-                        if (timeProjectingAnAttack <= 0f)
+                        if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
                         {
                             mainActionState = MainActionState.PERFORMING;
 
-                            timeProjectingAnAttack = MAX_TIME_TO_PROJECT_AN_ATTACK;
+                            OnAttackPerformanceStarted?.Invoke(this, EventArgs.Empty);
                         }
                     }
                 }
@@ -92,7 +85,7 @@ public class EnemyController : BattleAgent
 
                         DoBasicAttack(hittedArea);
 
-                        EndAttackAction();
+                        mainActionState = MainActionState.ON_HOLD;
                     }
                 }
 
@@ -112,47 +105,32 @@ public class EnemyController : BattleAgent
                     {
                         SetNextAnimation(AnimationState.IDLE);
 
-                        if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= rangeToAttack)
-                        {
-                            SetNextAction(BattleAction.MAIN);
-
-                            StartAttackAction();
-                        }
-                        else
-                        {
-                            EndTurn();
-                        }
+                        SetNextAction(BattleAction.MAIN);
                     }
                 }
                 else
                 {
-                    Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
-                    List<Vector2Int> blackList = BattleManager.Instance.GetAllEnemiesCellPositions(false);
-
-                    blackList.Remove(cellPosition); // Removes own cell position from the balck list.
-
-                    List<(Vector2Int, int)> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position, blackList);
+                    Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    List<(Vector2Int, int)> pathFound = FindPathToFollow(mouseWorldPosition);
 
                     if (pathFound.Count > 0)
                     {
-                        Vector2Int mainCharacterCellPosition = NavigationManager.Instance.ConvertToCellPosition(MainCharacterController.Instance.transform.position);
+                        (List<Vector2Int> pathToMark, int pathCost) = NavigationManager.Instance.GetCostFromPath(pathFound);
 
-                        if (pathFound[^1].Item1 == mainCharacterCellPosition)
+                        if (pathCost > maxMovementAmount || BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition, false))
                         {
-                            pathFound.Remove(pathFound[^1]); // Removes the last element to prevent the enemy from reaching the same position as the target.
+                            NavigationManager.Instance.MarkPath(pathToMark, new Color(1f, 0f, 0f, 0.125f));
                         }
-
-                        SetNextAnimation(AnimationState.RUNNING);
-
-                        SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
-                    }
-                    else
-                    {
-                        if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= rangeToAttack)
+                        else
                         {
-                            SetNextAction(BattleAction.MAIN);
+                            NavigationManager.Instance.MarkPath(pathToMark, new Color(1f, 1f, 1f, 0.125f));
 
-                            StartAttackAction();
+                            if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                            {
+                                SetNextAnimation(AnimationState.RUNNING);
+
+                                SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                            }
                         }
                     }
                 }
@@ -165,45 +143,65 @@ public class EnemyController : BattleAgent
         }
         else
         {
-            if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= visionRange)
-            {
-                LookAt(MainCharacterController.Instance.transform.position.x);
+            Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            List<(Vector2Int, int)> pathFound = FindPathToFollow(mouseWorldPosition);
 
-                BattleManager.Instance.RequestBattleToStart();
+            if (pathFound.Count > 0)
+            {
+                if (BattleManager.Instance.HasEnemyOnPosition(mouseWorldPosition, false))
+                {
+                    NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition), new Color(1f, 0f, 0f, 0.125f));
+                }
+                else
+                {
+                    NavigationManager.Instance.MarkPosition(NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition), new Color(1f, 1f, 1f, 0.125f));
+
+                    if (Input.GetMouseButtonDown(0)) // LEFT MOUSE CLICK.
+                    {
+                        SetNextAnimation(AnimationState.RUNNING);
+
+                        SetPathToFollow(NavigationManager.Instance.ConvertToWorldPosition(pathFound));
+                    }
+                }
+            }
+
+            if (hasPathToFollow)
+            {
+                FollowPathFound(movementSpeed * FREE_MOVE_SPEED_MULTIPLIER * Time.deltaTime, true);
             }
         }
-    }
-
-    private void StartAttackAction()
-    {
-        LookAt(MainCharacterController.Instance.transform.position.x);
-
-        mainActionState = MainActionState.PROJECTING;
-        mainActionType = MainActionType.ATTACK;
-
-        OnAttackActionStarted?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void EndAttackAction()
-    {
-        mainActionState = MainActionState.ON_HOLD;
-        mainActionType = MainActionType.NONE;
-
-        OnAttackActionEnded?.Invoke(this, EventArgs.Empty);
-
-        EndTurn();
     }
 
     private void DoBasicAttack(List<Vector2Int> hittedCellPositions)
     {
-        Vector2Int mainCharacterCellPosition = NavigationManager.Instance.ConvertToCellPosition(MainCharacterController.Instance.transform.position);
-
         foreach (Vector2Int cellPosition in hittedCellPositions)
         {
-            if (cellPosition == mainCharacterCellPosition)
+            BattleAgent enemy = BattleManager.Instance.GetEnemyOnCellPosition(cellPosition, false);
+
+            if (enemy != null)
             {
-                MainCharacterController.Instance.TakeDamage(damage);
+                enemy.TakeDamage(damage);
             }
         }
+    }
+
+    public void StartAttackAction()
+    {
+        mainActionState = MainActionState.PROJECTING;
+        mainActionType = MainActionType.ATTACK;
+    }
+
+    public void CancelAttackAction()
+    {
+        mainActionState = MainActionState.ON_HOLD;
+        mainActionType = MainActionType.NONE;
+    }
+
+    public void EndAttackAction()
+    {
+        mainActionState = MainActionState.ON_HOLD;
+        mainActionType = MainActionType.NONE;
+
+        EndTurn();
     }
 }

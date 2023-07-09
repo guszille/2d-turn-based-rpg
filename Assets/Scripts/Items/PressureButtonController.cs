@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public class PressureButtonController : MonoBehaviour
 {
@@ -33,24 +32,23 @@ public class PressureButtonController : MonoBehaviour
 
             if (mainCharacterCellPosition == buttonCellPosition)
             {
-                isPressed = true;
-
-                spriteRenderer.sprite = buttonDownSprite;
-
-                SwapDoorTiles();
+                DoButtonAction();
             }
         }
     }
 
-    private void SwapDoorTiles()
+    private void DoButtonAction()
     {
+        isPressed = true;
+
+        spriteRenderer.sprite = buttonDownSprite;
+
         for (int i = 0; i < connectionGridPositions.Length; i++)
         {
             Vector2Int gridPosition = connectionGridPositions[i];
-            TileBase tileBase = doorOpenTileGroupSO.tileGroupList[i];
+            int level = i == 0 || i == 1 ? 2 : 1; // According the order of the positions on the list...
 
-            GameManager.Instance.InsertEnviromentTile(gridPosition, tileBase);
-
+            GameManager.Instance.InsertEnviromentTile(gridPosition, doorOpenTileGroupSO.tileGroupList[i], level);
             NavigationManager.Instance.InsertNavigationTile(gridPosition);
         }
     }

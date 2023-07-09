@@ -19,6 +19,7 @@ public class BattleAgent : MonoBehaviour
 
     public event EventHandler OnBattleTurnEnded;
     public event EventHandler OnHitPointsChanged;
+    public event EventHandler OnArmorPointsChanged;
 
     [Header("NAVIGATION INFO")]
     [SerializeField] protected float movementSpeed = 10f;
@@ -26,6 +27,7 @@ public class BattleAgent : MonoBehaviour
 
     [Header("COMBAT INFO")]
     [SerializeField] protected float maxHitPoints = 5f;
+    [SerializeField] protected float maxArmorPoints = 5f;
     [SerializeField] protected float maxMovementAmount = 10f;
     [SerializeField] protected float initiative = 1f;
     [SerializeField] protected float damage = 1f;
@@ -43,6 +45,7 @@ public class BattleAgent : MonoBehaviour
     protected MainActionType mainActionType;
     protected MainActionState mainActionState;
     protected float hitPoints;
+    protected float armorPoints;
 
     protected AnimationState animationState;
 
@@ -192,13 +195,22 @@ public class BattleAgent : MonoBehaviour
 
     public void TakeDamage(float damageTaken)
     {
-        hitPoints = Mathf.Max(hitPoints - damageTaken, 0f);
-
-        OnHitPointsChanged?.Invoke(this, EventArgs.Empty);
-
-        if (hitPoints == 0f)
+        if (armorPoints > 0f)
         {
-            Hide();
+            armorPoints = Mathf.Max(armorPoints - damageTaken, 0f);
+
+            OnArmorPointsChanged?.Invoke(this, EventArgs.Empty);
+        }
+        else
+        {
+            hitPoints = Mathf.Max(hitPoints - damageTaken, 0f);
+
+            OnHitPointsChanged?.Invoke(this, EventArgs.Empty);
+
+            if (hitPoints == 0f)
+            {
+                Hide();
+            }
         }
     }
 
@@ -215,6 +227,16 @@ public class BattleAgent : MonoBehaviour
     public float GetHitPoints()
     {
         return hitPoints;
+    }
+
+    public float GetMaxArmorPoints()
+    {
+        return maxArmorPoints;
+    }
+
+    public float GetArmorPoints()
+    {
+        return armorPoints;
     }
 
     public float GetInitiative()

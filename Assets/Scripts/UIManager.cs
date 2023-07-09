@@ -6,18 +6,30 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-    [Header("TEXT FIELDS")]
+    [Header("GAME STATE DISPLAY")]
     [SerializeField] private TextMeshProUGUI gameStateText;
     [SerializeField] private TextMeshProUGUI battleTurnOwnerStateText;
     [SerializeField] private TextMeshProUGUI battleActionStateText;
 
-    [Header("BUTTONS")]
+    [Header("BATTLE ACTION BUTTONS")]
     [SerializeField] private Button mainActionAttackButton;
+    [SerializeField] private Button mainActionUseItemButton;
     [SerializeField] private Button skipActionButton;
 
-    [Header("HIT POINTS")]
+    [Header("PLAYER ATTRIBUTES")]
     [SerializeField] private GameObject hitPointsGroup;
     [SerializeField] private GameObject[] heartImagePrefabs;
+    [SerializeField] private TextMeshProUGUI armorPointsText;
+    [SerializeField] private TextMeshProUGUI initiativeText;
+
+    [Header("ENEMY INFO VIEW")]
+    [SerializeField] private GameObject enemyViewPanel;
+    [SerializeField] private Image enemyHitPointsBar;
+    [SerializeField] private Image enemyArmorPointsBar;
+    [SerializeField] private TextMeshProUGUI enemyHitPointsText;
+    [SerializeField] private TextMeshProUGUI enemyArmorPointsText;
+
+    private BattleAgent trackedEnemy;
 
     private void Awake()
     {
@@ -26,7 +38,12 @@ public class UIManager : MonoBehaviour
         battleActionStateText.text = "-";
 
         mainActionAttackButton.interactable = false;
+        mainActionUseItemButton.interactable = false;
         skipActionButton.interactable = false;
+
+        enemyViewPanel.SetActive(false);
+
+        trackedEnemy = null;
     }
 
     private void Start()
@@ -44,8 +61,24 @@ public class UIManager : MonoBehaviour
         BattleManager.Instance.OnBattleActionChanged += BattleManager_OnBattleActionChanged;
 
         MainCharacterController.Instance.OnHitPointsChanged += MainCharacter_OnHitPointsChanged;
+        MainCharacterController.Instance.OnArmorPointsChanged += MainCharacter_OnArmorPointsChanged;
 
         UpdateHitPointsUI();
+        UpdateArmorPointsUI();
+        UpdateInitiativeUI();
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(1)) // RIGHT MOUSE CLICK.
+        {
+            Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2Int mouseCellPosition = NavigationManager.Instance.ConvertToCellPosition(mouseWorldPosition);
+
+            UpdateTrackedEnemy(BattleManager.Instance.GetEnemyOnCellPosition(mouseCellPosition, false));
+
+            UpdateEnemyViewPanel();
+        }
     }
 
     private void BattleManager_OnBattleModeChanged(object sender, BattleManager.OnBattleModeChangedEventArgs e)
@@ -112,6 +145,11 @@ public class UIManager : MonoBehaviour
         UpdateHitPointsUI();
     }
 
+    private void MainCharacter_OnArmorPointsChanged(object sender, System.EventArgs e)
+    {
+        UpdateArmorPointsUI();
+    }
+
     private void UpdateHitPointsUI()
     {
         float maxHitPoints = MainCharacterController.Instance.GetMaxHitPoints();
@@ -136,6 +174,71 @@ public class UIManager : MonoBehaviour
             {
                 Instantiate(heartImagePrefabs[2], hitPointsGroup.transform); // Empty.
             }
+        }
+    }
+
+    private void UpdateArmorPointsUI()
+    {
+        float maxArmorPoints = MainCharacterController.Instance.GetMaxArmorPoints();
+        float armorPoints = MainCharacterController.Instance.GetArmorPoints();
+
+        armorPointsText.text = "ARMOR PTS: " + armorPoints.ToString("F1") + "/" + maxArmorPoints.ToString("F1");
+    }
+
+    private void UpdateInitiativeUI()
+    {
+        float initiative = MainCharacterController.Instance.GetInitiative();
+
+        initiativeText.text = "INITIATIVE: " + initiative.ToString("F1");
+    }
+
+    private void UpdateTrackedEnemy(BattleAgent newTrackedEnemy)
+    {
+        if (trackedEnemy != null)
+        {
+            trackedEnemy.OnHitPointsChanged -= TrackedEnemy_OnHitPointsChanged;
+            trackedEnemy.OnArmorPointsChanged -= TrackedEnemy_OnArmorPointsChanged;
+        }
+
+        trackedEnemy = newTrackedEnemy;
+
+        if (trackedEnemy != null)
+        {
+            trackedEnemy.OnHitPointsChanged += TrackedEnemy_OnHitPointsChanged;
+            trackedEnemy.OnArmorPointsChanged += TrackedEnemy_OnArmorPointsChanged;
+        }
+    }
+
+    private void TrackedEnemy_OnHitPointsChanged(object sender, System.EventArgs e)
+    {
+        UpdateEnemyViewPanel();
+    }
+
+    private void TrackedEnemy_OnArmorPointsChanged(object sender, System.EventArgs e)
+    {
+        UpdateEnemyViewPanel();
+    }
+
+    private void UpdateEnemyViewPanel()
+    {
+        if (trackedEnemy != null)
+        {
+            float maxArmorPoints = trackedEnemy.GetMaxArmorPoints();
+            float armorPoints = trackedEnemy.GetArmorPoints();
+            float maxHitPoints = trackedEnemy.GetMaxHitPoints();
+            float hitPoints = trackedEnemy.GetHitPoints();
+
+            enemyArmorPointsBar.fillAmount = armorPoints / maxArmorPoints;
+            enemyHitPointsBar.fillAmount = hitPoints / maxHitPoints;
+
+            enemyArmorPointsText.text = armorPoints.ToString("F1") + "/" + maxArmorPoints.ToString("F1");
+            enemyHitPointsText.text = hitPoints.ToString("F1") + "/" + maxHitPoints.ToString("F1");
+
+            enemyViewPanel.SetActive(true);
+        }
+        else
+        {
+            enemyViewPanel.SetActive(false);
         }
     }
 }

@@ -7,15 +7,27 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [SerializeField] private Tilemap enviromentWallsAndDoorsTilemap;
+    [SerializeField] private Tilemap enviromentLevelOneTilemap;
+    [SerializeField] private Tilemap enviromentLevelTwoTilemap;
 
     private void Awake()
     {
         Instance = this;
     }
 
-    public void InsertEnviromentTile(Vector2Int position, TileBase tileBase)
+    public void InsertEnviromentTile(Vector2Int position, TileBase tileBase, int level = 1)
     {
-        enviromentWallsAndDoorsTilemap.SetTile(new Vector3Int(position.x, position.y), tileBase);
+        switch (level)
+        {
+            case 1:
+                enviromentLevelOneTilemap.SetTile(new Vector3Int(position.x, position.y), tileBase);
+                break;
+            case 2:
+                enviromentLevelTwoTilemap.SetTile(new Vector3Int(position.x, position.y), tileBase);
+                break;
+            default:
+                // Do nothing...
+                break;
+        }
     }
 }
