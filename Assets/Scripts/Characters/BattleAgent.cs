@@ -214,6 +214,20 @@ public class BattleAgent : MonoBehaviour
         }
     }
 
+    public void HealAP(float amount)
+    {
+        armorPoints = Mathf.Min(armorPoints + amount, maxArmorPoints);
+
+        OnArmorPointsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void HealHP(float amount)
+    {
+        hitPoints = Mathf.Min(hitPoints + amount, maxHitPoints);
+
+        OnHitPointsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public AgentType GetAgentType()
     {
         return agentType;
