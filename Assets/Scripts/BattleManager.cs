@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public class BattleManager : MonoBehaviour
 {
@@ -18,11 +19,12 @@ public class BattleManager : MonoBehaviour
     public class OnBattleActionChangedEventArgs : EventArgs { public BattleAgent.BattleAction battleAction; }
     public event EventHandler<OnBattleActionChangedEventArgs> OnBattleActionChanged;
 
-    [SerializeField] private List<EnemyController> enemiesInTheRoom;  // FIXME: temporary solution to get the enemies.
+    [SerializeField] private GameObject enemiesOnTheMap;
 
     private BattleMode battleMode;
     private List<BattleAgent> agentsInBattle;
     private int currentTurnOwner;
+    private List<int> enemyRoomsInBattle;
 
     private void Awake()
     {
@@ -31,6 +33,7 @@ public class BattleManager : MonoBehaviour
         battleMode = BattleMode.OFF;
         agentsInBattle = new List<BattleAgent>();
         currentTurnOwner = 0;
+        enemyRoomsInBattle = new List<int>();
     }
 
     private void ResetBattleManager()
@@ -45,15 +48,21 @@ public class BattleManager : MonoBehaviour
 
         agentsInBattle.Add(MainCharacterController.Instance);
 
-        foreach (EnemyController enemy in enemiesInTheRoom)
+        foreach (int roomNumber in enemyRoomsInBattle)
         {
-            enemy.PutInBattle();
+            Transform room = enemiesOnTheMap.transform.GetChild(roomNumber - 1);
 
-            agentsInBattle.Add(enemy);
+            foreach (Transform enemy in room)
+            {
+                BattleAgent enemyBattleAgent = enemy.GetComponent<BattleAgent>();
+
+                enemyBattleAgent.PutInBattle();
+
+                agentsInBattle.Add(enemyBattleAgent);
+            }
         }
 
-        agentsInBattle.Sort(delegate (BattleAgent A, BattleAgent B)
-        {
+        agentsInBattle.Sort(delegate (BattleAgent A, BattleAgent B) {
             if (A.GetInitiative() > B.GetInitiative()) return -1;
             else if (A.GetInitiative() < B.GetInitiative()) return +1;
             else return 0;
@@ -141,7 +150,7 @@ public class BattleManager : MonoBehaviour
         {
             do
             {
-                currentTurnOwner = (currentTurnOwner + 1) % agentsInBattle.Count; // Move to next agent.
+                currentTurnOwner = (currentTurnOwner + 1) % agentsInBattle.Count; // Move to next valid agent.
             }
             while (agentsInBattle[currentTurnOwner].GetHitPoints() == 0f);
 
@@ -149,8 +158,13 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public void RequestBattleToStart()
+    public void RequestBattleToStart(int roomNumber)
     {
+        if (!enemyRoomsInBattle.Contains(roomNumber))
+        {
+            enemyRoomsInBattle.Add(roomNumber);
+        }
+
         if (battleMode == BattleMode.OFF)
         {
             ResetBattleManager();
@@ -161,19 +175,31 @@ public class BattleManager : MonoBehaviour
 
             StartCurrentTurn();
         }
+        else
+        {
+            ResetBattleManager();
+            SetupAgentsInBattle();
+
+            StartCurrentTurn();
+        }
     }
 
     public bool HasEnemyOnPosition(Vector3 worldPosition, bool includeDeadEnemies = true)
     {
         Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(worldPosition);
 
-        foreach (EnemyController enemy in enemiesInTheRoom)
+        foreach (Transform room in enemiesOnTheMap.transform)
         {
-            if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
+            foreach (Transform enemy in room)
             {
-                if (includeDeadEnemies || enemy.GetHitPoints() > 0f)
+                BattleAgent enemyBattleAgent = enemy.GetComponent<BattleAgent>();
+
+                if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemyBattleAgent.transform.position))
                 {
-                    return true;
+                    if (includeDeadEnemies || enemyBattleAgent.GetHitPoints() > 0f)
+                    {
+                        return true;
+                    }
                 }
             }
         }
@@ -183,13 +209,18 @@ public class BattleManager : MonoBehaviour
 
     public BattleAgent GetEnemyOnCellPosition(Vector2Int cellPosition, bool includeDeadEnemies = true)
     {
-        foreach (EnemyController enemy in enemiesInTheRoom)
+        foreach (Transform room in enemiesOnTheMap.transform)
         {
-            if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position))
+            foreach (Transform enemy in room)
             {
-                if (includeDeadEnemies || enemy.GetHitPoints() > 0f)
+                BattleAgent enemyBattleAgent = enemy.GetComponent<BattleAgent>();
+
+                if (cellPosition == NavigationManager.Instance.ConvertToCellPosition(enemyBattleAgent.transform.position))
                 {
-                    return enemy;
+                    if (includeDeadEnemies || enemyBattleAgent.GetHitPoints() > 0f)
+                    {
+                        return enemyBattleAgent;
+                    }
                 }
             }
         }
@@ -201,11 +232,16 @@ public class BattleManager : MonoBehaviour
     {
         List<Vector2Int> enemiesCellPositions = new List<Vector2Int>();
 
-        foreach (EnemyController enemy in enemiesInTheRoom)
+        foreach (Transform room in enemiesOnTheMap.transform)
         {
-            if (includeDeadEnemies || enemy.GetHitPoints() > 0f)
+            foreach (Transform enemy in room)
             {
-                enemiesCellPositions.Add(NavigationManager.Instance.ConvertToCellPosition(enemy.transform.position));
+                BattleAgent enemyBattleAgent = enemy.GetComponent<BattleAgent>();
+
+                if (includeDeadEnemies || enemyBattleAgent.GetHitPoints() > 0f)
+                {
+                    enemiesCellPositions.Add(NavigationManager.Instance.ConvertToCellPosition(enemyBattleAgent.transform.position));
+                }
             }
         }
 

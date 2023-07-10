@@ -8,8 +8,9 @@ public class EnemyController : BattleAgent
     public event EventHandler OnAttackActionStarted;
     public event EventHandler OnAttackActionEnded;
 
-    private const float MAX_TIME_TO_PROJECT_AN_ATTACK = 1f;
+    [SerializeField] private int roomNumber;
 
+    private float maxTimeProjectingAnAttack = 1f;
     private float timeProjectingAnAttack;
 
     private void Awake()
@@ -30,7 +31,7 @@ public class EnemyController : BattleAgent
         hitPoints = maxHitPoints;
         armorPoints = maxArmorPoints;
 
-        timeProjectingAnAttack = MAX_TIME_TO_PROJECT_AN_ATTACK;
+        timeProjectingAnAttack = maxTimeProjectingAnAttack;
     }
 
     private void Update()
@@ -69,7 +70,7 @@ public class EnemyController : BattleAgent
                         {
                             mainActionState = MainActionState.PERFORMING;
 
-                            timeProjectingAnAttack = MAX_TIME_TO_PROJECT_AN_ATTACK;
+                            timeProjectingAnAttack = maxTimeProjectingAnAttack;
                         }
                     }
                 }
@@ -168,9 +169,19 @@ public class EnemyController : BattleAgent
         {
             if (Vector3.Distance(transform.position, MainCharacterController.Instance.transform.position) <= visionRange)
             {
-                LookAt(MainCharacterController.Instance.transform.position.x);
+                Vector2Int cellPosition = NavigationManager.Instance.ConvertToCellPosition(transform.position);
+                List<Vector2Int> blackList = BattleManager.Instance.GetAllEnemiesCellPositions(false);
 
-                BattleManager.Instance.RequestBattleToStart();
+                blackList.Remove(cellPosition); // Removes own cell position from the balck list.
+
+                List<(Vector2Int, int)> pathFound = FindPathToFollow(MainCharacterController.Instance.transform.position, blackList);
+
+                if (pathFound.Count > 0) // Needs to see a clear path between itself and the palyer.
+                {
+                    LookAt(MainCharacterController.Instance.transform.position.x);
+
+                    BattleManager.Instance.RequestBattleToStart(roomNumber);
+                }
             }
         }
     }
