@@ -23,8 +23,11 @@ public class NavigationManager : MonoBehaviour
         navigationTilemap.GetComponent<TilemapRenderer>().enabled = false;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
+        // According to the DOCS, "FixedUpdate" runs before the actual "Update".
+        // So we can take advantage of this to clear the projection tilemap before marking on this frame.
+        //
         ClearMarkedTilemap();
     }
 

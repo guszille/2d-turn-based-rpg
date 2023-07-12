@@ -228,8 +228,8 @@ public class UIManager : MonoBehaviour
             float maxHitPoints = trackedEnemy.GetMaxHitPoints();
             float hitPoints = trackedEnemy.GetHitPoints();
 
-            enemyArmorPointsBar.fillAmount = armorPoints / maxArmorPoints;
-            enemyHitPointsBar.fillAmount = hitPoints / maxHitPoints;
+            enemyArmorPointsBar.fillAmount = maxArmorPoints > 0f ? armorPoints / maxArmorPoints : 0f;
+            enemyHitPointsBar.fillAmount = maxHitPoints > 0f ? hitPoints / maxHitPoints : 0f;
 
             enemyArmorPointsText.text = armorPoints.ToString("F1") + "/" + maxArmorPoints.ToString("F1");
             enemyHitPointsText.text = hitPoints.ToString("F1") + "/" + maxHitPoints.ToString("F1");

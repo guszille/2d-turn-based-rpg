@@ -9,16 +9,18 @@ public class EnemyVisualUIController : MonoBehaviour
     [SerializeField] private Image hitPointsBar;
     [SerializeField] private Image armorPointsBar;
 
-    private void Awake()
-    {
-        hitPointsBar.fillAmount = 1f;
-        armorPointsBar.fillAmount = 1f;
-    }
-
     private void Start()
     {
+        float maxHitPoints = enemyController.GetMaxHitPoints();
+        float hitPoints = enemyController.GetHitPoints();
+        float maxArmorPoints = enemyController.GetMaxArmorPoints();
+        float armorPoints = enemyController.GetArmorPoints();
+
         enemyController.OnHitPointsChanged += EnemyController_OnHitPointsChanged;
         enemyController.OnArmorPointsChanged += EnemyController_OnArmorPointsChanged;
+
+        hitPointsBar.fillAmount = maxHitPoints > 0f ? hitPoints / maxHitPoints : 0f;
+        armorPointsBar.fillAmount = maxArmorPoints > 0f ? armorPoints / maxArmorPoints : 0f;
     }
 
     private void Update()
@@ -32,7 +34,7 @@ public class EnemyVisualUIController : MonoBehaviour
         float maxHitPoints = enemyController.GetMaxHitPoints();
         float hitPoints = enemyController.GetHitPoints();
 
-        hitPointsBar.fillAmount = hitPoints / maxHitPoints;
+        hitPointsBar.fillAmount = maxHitPoints > 0f ? hitPoints / maxHitPoints : 0f;
     }
 
     private void EnemyController_OnArmorPointsChanged(object sender, System.EventArgs e)
@@ -40,7 +42,7 @@ public class EnemyVisualUIController : MonoBehaviour
         float maxArmorPoints = enemyController.GetMaxArmorPoints();
         float armorPoints = enemyController.GetArmorPoints();
 
-        armorPointsBar.fillAmount = armorPoints / maxArmorPoints;
+        armorPointsBar.fillAmount = maxArmorPoints > 0f ? armorPoints / maxArmorPoints : 0f;
     }
 
     private void UpdateHitPointsBarDisposition()
