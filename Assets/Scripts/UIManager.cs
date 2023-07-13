@@ -182,14 +182,14 @@ public class UIManager : MonoBehaviour
         float maxArmorPoints = MainCharacterController.Instance.GetMaxArmorPoints();
         float armorPoints = MainCharacterController.Instance.GetArmorPoints();
 
-        armorPointsText.text = "Armor Points: " + armorPoints.ToString("F1") + "/" + maxArmorPoints.ToString("F1");
+        armorPointsText.text = armorPoints.ToString("F1") + "/" + maxArmorPoints.ToString("F1");
     }
 
     private void UpdateInitiativeUI()
     {
         float initiative = MainCharacterController.Instance.GetInitiative();
 
-        initiativeText.text = "Initiative: " + initiative.ToString("F1");
+        initiativeText.text = initiative.ToString("F1");
     }
 
     private void UpdateTrackedEnemy(BattleAgent newTrackedEnemy)

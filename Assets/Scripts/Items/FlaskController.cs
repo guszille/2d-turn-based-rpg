@@ -6,8 +6,8 @@ public class FlaskController : MonoBehaviour
 {
     public enum FlaskType { HIT_POINTS, ARMOR_POINTS, POWER, POINSON }
 
-    private const float FLASK_HEALING_HP_AMOUNT = 4.0f;
-    private const float FLASK_HEALING_AP_AMOUNT = 2.5f;
+    private const float FLASK_HEALING_HP_AMOUNT = 2.0f;
+    private const float FLASK_HEALING_AP_AMOUNT = 3.0f;
 
     [SerializeField] private FlaskType flaskType;
 

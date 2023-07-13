@@ -274,7 +274,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementSpeed: 10
   minThresholdToReachPosition: 0.005
-  maxHitPoints: 10
+  maxHitPoints: 3
   maxArmorPoints: 0
   maxMovementAmount: 60
   initiative: 1
